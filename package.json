@@ -1,11 +1,11 @@
 {
 	"name": "spend",
 	"private": true,
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"type": "module",
 	"packageManager": "pnpm@12.4.1",
 	"scripts": {
-		"dev": "vite dev",
+		"dev": "vite dev --port 5333",
 		"build": "vite build",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
