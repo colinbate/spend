@@ -575,10 +575,6 @@ select:focus-visible {
 		padding: 8px;
 		font-size: 12px;
 	}
-	.capture-page {
-		justify-content: flex-start;
-		padding-top: 22vh;
-	}
 	.amount-input {
 		height: 72px;
 		padding: 6px;
