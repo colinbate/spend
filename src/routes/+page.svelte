@@ -100,6 +100,7 @@
 	<form class="quick-entry" onsubmit={captureExpense}>
 		<div class="amount-input">
 			<span aria-hidden="true">$</span>
+			<!-- svelte-ignore a11y_autofocus -->
 			<input
 				{@attach focusAmount}
 				bind:value={amount}
@@ -108,6 +109,7 @@
 				type="text"
 				placeholder="0.00"
 				autocomplete="off"
+				autofocus
 			/>
 			<button type="submit" disabled={saving}>{saving ? 'Saving' : 'Add'}</button>
 		</div>
