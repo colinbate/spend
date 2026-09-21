@@ -1,7 +1,7 @@
 {
 	"name": "spend",
 	"private": true,
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"type": "module",
 	"packageManager": "pnpm@12.4.1",
 	"scripts": {
@@ -44,5 +44,8 @@
 	"imports": {
 		"#lib": "./src/lib/index.js",
 		"#lib/*": "./src/lib/*"
+	},
+	"dependencies": {
+		"@sveltejs/adapter-cloudflare": "^7.2.9"
 	}
 }
