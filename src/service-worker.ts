@@ -26,6 +26,27 @@ worker.addEventListener('activate', (event) => {
 
 worker.addEventListener('fetch', (event) => {
 	if (event.request.method !== 'GET') return;
+
+	if (event.request.mode === 'navigate') {
+		event.respondWith(
+			(async () => {
+				const cache = await caches.open(cacheName);
+				try {
+					const response = await fetch(event.request, { cache: 'no-store' });
+					if (response.ok) await cache.put(event.request, response.clone());
+					return response;
+				} catch (error) {
+					const cached = await cache.match(event.request);
+					const fallback = await cache.match(new URL('.', worker.location.href).pathname);
+					if (cached) return cached;
+					if (fallback) return fallback;
+					throw error;
+				}
+			})()
+		);
+		return;
+	}
+
 	event.respondWith(
 		caches.match(event.request).then(async (cached) => {
 			if (cached) return cached;
