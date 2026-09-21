@@ -11,5 +11,5 @@ directory = ".svelte-kit/cloudflare"
 enabled = true
 
 [[routes]]
-pattern = "spend.bate.dev"
+pattern = "spending.bate.dev"
 custom_domain = true
