@@ -82,3 +82,23 @@ export async function getBudget(): Promise<Budget> {
 export function saveBudget(budget: Budget): Promise<IDBValidKey> {
 	return useStore(SETTINGS, 'readwrite', (store) => store.put(budget, 'budget'));
 }
+
+export async function restoreBackup(expenses: Expense[], budget: Budget): Promise<void> {
+	const database = await openDatabase();
+	return new Promise((resolve, reject) => {
+		const transaction = database.transaction([EXPENSES, SETTINGS], 'readwrite');
+		const expenseStore = transaction.objectStore(EXPENSES);
+
+		for (const expense of expenses) expenseStore.put(expense);
+		transaction.objectStore(SETTINGS).put(budget, 'budget');
+
+		transaction.oncomplete = () => {
+			database.close();
+			resolve();
+		};
+		transaction.onabort = () => {
+			database.close();
+			reject(transaction.error ?? new Error('Could not import the backup.'));
+		};
+	});
+}

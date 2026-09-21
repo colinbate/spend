@@ -422,7 +422,8 @@ select:focus-visible {
 	font-size: 12px;
 }
 .primary-button,
-.danger-button {
+.danger-button,
+.secondary-button {
 	min-height: 43px;
 	padding: 0 16px;
 	border-radius: 8px;
@@ -438,6 +439,43 @@ select:focus-visible {
 	border: 1px solid var(--danger-border);
 	color: var(--danger);
 	background: var(--surface);
+}
+.secondary-button {
+	border: 1px solid var(--input-border);
+	color: var(--ink);
+	background: var(--surface);
+}
+.primary-button:disabled,
+.secondary-button:disabled {
+	opacity: 0.55;
+	cursor: default;
+}
+.backup-section {
+	margin-top: 42px;
+	padding-top: 28px;
+	border-top: 1px solid var(--line);
+}
+.backup-section h2 {
+	margin: 0 0 8px;
+	font-size: 17px;
+}
+.backup-section > p {
+	margin: 0;
+	color: var(--muted);
+	font-size: 13px;
+	line-height: 1.5;
+}
+.backup-actions {
+	display: flex;
+	gap: 10px;
+	margin-top: 18px;
+}
+.backup-status {
+	min-height: 20px;
+	padding-top: 10px;
+}
+.backup-status.error {
+	color: var(--danger);
 }
 
 .modal-backdrop {
