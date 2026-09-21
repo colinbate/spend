@@ -1,35 +1,61 @@
 <script lang="ts">
 	import './layout.css';
 	import { afterNavigate } from '$app/navigation';
-	import { page } from '$app/state';
+	import { page, updated } from '$app/state';
 	import { onMount } from 'svelte';
 
 	let { children } = $props();
-	let reloading = false;
 
-	afterNavigate(() => {
-		if ('serviceWorker' in navigator) {
-			void navigator.serviceWorker.ready
-				.then((registration) => registration.update())
-				.catch(() => {
-					// Being offline is expected; the cached app remains available.
-				});
+	/**
+	 * Ask the browser to re-fetch `service-worker.js`. If the deployment has changed the
+	 * new worker installs, calls `skipWaiting()`, claims this page, and the
+	 * `controllerchange` handler below reloads into the new version.
+	 */
+	async function checkForUpdate() {
+		if (!('serviceWorker' in navigator)) return;
+		try {
+			const registration = await navigator.serviceWorker.getRegistration();
+			await registration?.update();
+		} catch {
+			// Being offline is expected; the cached app remains available.
 		}
+	}
+
+	// Browsers only look for a new worker on full-page navigations, so check on
+	// client-side navigations too.
+	afterNavigate(() => void checkForUpdate());
+
+	// SvelteKit polls `_app/version.json` (and re-checks when the app regains focus).
+	// When it notices a new deployment, fetch the matching service worker right away.
+	$effect(() => {
+		if (updated.current) void checkForUpdate();
 	});
 
 	onMount(() => {
 		if (!('serviceWorker' in navigator)) return;
-		const wasControlled = navigator.serviceWorker.controller !== null;
 
+		// A home-screen app on iOS is usually resumed rather than relaunched, so no
+		// navigation happens. Check for updates whenever it comes back to the foreground.
+		function handleVisibilityChange() {
+			if (document.visibilityState === 'visible') void checkForUpdate();
+		}
+
+		// Reload once a *new* worker takes over a page that was already controlled.
+		// The very first install claims the page too, but nothing changed, so no reload.
+		let controlled = navigator.serviceWorker.controller !== null;
+		let reloading = false;
 		function handleControllerChange() {
-			if (wasControlled && !reloading) {
+			if (controlled && !reloading) {
 				reloading = true;
 				window.location.reload();
 			}
+			controlled = true;
 		}
 
+		document.addEventListener('visibilitychange', handleVisibilityChange);
 		navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
 		return () => {
+			document.removeEventListener('visibilitychange', handleVisibilityChange);
 			navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
 		};
 	});
