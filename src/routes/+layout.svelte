@@ -5,6 +5,10 @@
 	let { children } = $props();
 </script>
 
+<svelte:head>
+	<meta name="theme-color" content="#f5f5f1" media="(prefers-color-scheme: light)" />
+	<meta name="theme-color" content="#111512" media="(prefers-color-scheme: dark)" />
+</svelte:head>
 
 <div class="site-shell">
 	<header class="site-header">

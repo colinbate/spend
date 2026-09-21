@@ -5,8 +5,8 @@
 	"start_url": "/",
 	"scope": "/",
 	"display": "standalone",
-	"background_color": "#f5f3ed",
-	"theme_color": "#16a34a",
+	"background_color": "#111512",
+	"theme_color": "#111512",
 	"icons": [
     {
       "src": "/web-app-manifest-192x192.png?v=20260921",
@@ -20,5 +20,5 @@
       "type": "image/png",
       "purpose": "maskable"
     }
-  ],
+	  ]
 }
