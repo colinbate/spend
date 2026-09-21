@@ -32,6 +32,10 @@
 	});
 
 	onMount(() => {
+		// Everything lives in IndexedDB. Ask the browser not to evict it under storage
+		// pressure; Safari can otherwise clear site data for rarely used sites.
+		void navigator.storage?.persist?.().catch(() => {});
+
 		if (!('serviceWorker' in navigator)) return;
 
 		// A home-screen app on iOS is usually resumed rather than relaunched, so no
