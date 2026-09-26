@@ -27,6 +27,7 @@
 	let toast = $state('');
 	let amountInput = $state<HTMLInputElement>();
 	let toastTimer: ReturnType<typeof setTimeout> | undefined;
+	let focusTimer: ReturnType<typeof setTimeout> | undefined;
 
 	const bounds = $derived(getPeriodBounds(new Date(), 'week', budget.weekStart));
 	const weeklyTotal = $derived(
@@ -44,7 +45,10 @@
 
 	onMount(() => {
 		void load();
-		return () => clearTimeout(toastTimer);
+		return () => {
+			clearTimeout(toastTimer);
+			clearTimeout(focusTimer);
+		};
 	});
 
 	async function load() {
@@ -54,15 +58,34 @@
 			showToast('Could not load saved entries');
 		} finally {
 			await tick();
-			amountInput?.focus();
+			scheduleAmountFocus();
 		}
 	}
 
 	function focusAmount(element: HTMLInputElement) {
 		amountInput = element;
+		scheduleAmountFocus();
 		return () => {
 			amountInput = undefined;
 		};
+	}
+
+	function scheduleAmountFocus(delay = 0) {
+		clearTimeout(focusTimer);
+		focusTimer = setTimeout(() => {
+			if (document.visibilityState === 'visible' && !saving) {
+				amountInput?.focus({ preventScroll: true });
+			}
+		}, delay);
+	}
+
+	function handleActivation() {
+		// Installed PWAs can resume before their view is fully active, particularly on iOS.
+		scheduleAmountFocus(80);
+	}
+
+	function handleVisibilityChange() {
+		if (document.visibilityState === 'visible') handleActivation();
 	}
 
 	function showToast(message: string) {
@@ -76,7 +99,7 @@
 		const parsedAmount = centsToAmount(amountCents);
 		if (parsedAmount === null) {
 			showToast('Enter an amount greater than zero');
-			amountInput?.focus();
+			scheduleAmountFocus();
 			return;
 		}
 
@@ -113,7 +136,7 @@
 				`${formatCurrency(expense.amount)} added${locationFailed ? ' without location' : ''}`
 			);
 			await tick();
-			amountInput?.focus();
+			scheduleAmountFocus();
 		} catch {
 			showToast('Could not save that entry');
 		} finally {
@@ -122,6 +145,9 @@
 		}
 	}
 </script>
+
+<svelte:window onfocus={handleActivation} onpageshow={handleActivation} />
+<svelte:document onvisibilitychange={handleVisibilityChange} />
 
 <svelte:head>
 	<title>Add spending — Spend</title>
