@@ -385,12 +385,26 @@ select:focus-visible {
 .settings-page {
 	max-width: 460px;
 }
+.places-page {
+	max-width: 520px;
+}
+.page-intro {
+	margin: -14px 0 28px;
+	color: var(--muted);
+	font-size: 13px;
+	line-height: 1.55;
+}
+.page-intro a {
+	color: inherit;
+}
 .settings-form,
+.place-form,
 .modal form {
 	display: flex;
 	flex-direction: column;
 }
 .settings-form > label,
+.place-form > label,
 .modal form > label {
 	display: flex;
 	justify-content: space-between;
@@ -403,6 +417,7 @@ select:focus-visible {
 }
 .settings-form input,
 .settings-form select,
+.place-form input,
 .modal input,
 .modal select {
 	width: 100%;
@@ -416,6 +431,7 @@ select:focus-visible {
 }
 .settings-form input:focus,
 .settings-form select:focus,
+.place-form input:focus,
 .modal input:focus,
 .modal select:focus {
 	border-color: var(--accent);
@@ -431,6 +447,117 @@ select:focus-visible {
 }
 .field-with-prefix input {
 	padding-left: 29px;
+}
+.place-editor,
+.saved-places {
+	padding: 22px;
+	border: 1px solid var(--line);
+	border-radius: 12px;
+	background: var(--surface);
+}
+.place-editor h2,
+.saved-places h2 {
+	margin: 0;
+	font-size: 17px;
+}
+.place-form > label span {
+	color: var(--muted);
+	font-weight: 400;
+}
+.position-panel {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	margin-top: 20px;
+	padding: 13px;
+	border-radius: 9px;
+	background: var(--control);
+}
+.position-panel > div {
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+}
+.position-panel strong {
+	font-size: 12px;
+}
+.position-panel small {
+	overflow: hidden;
+	color: var(--muted);
+	font-size: 11px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.position-panel button {
+	flex: none;
+}
+.place-form-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 10px;
+	margin-top: 20px;
+}
+.place-status {
+	min-height: 20px;
+	margin: 0;
+	padding-top: 10px;
+	color: var(--muted);
+	font-size: 12px;
+}
+.place-status.error {
+	color: var(--danger);
+}
+.saved-places {
+	margin-top: 18px;
+}
+.saved-places .empty-message {
+	margin: 0;
+	padding: 38px 20px 20px;
+}
+.place-list {
+	margin: 14px -22px -22px;
+}
+.place-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 14px 22px;
+	border-top: 1px solid var(--line);
+}
+.place-row > div:first-child {
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+.place-row strong {
+	font-size: 14px;
+}
+.place-row small {
+	color: var(--muted);
+	font-size: 11px;
+}
+.place-row-actions {
+	display: flex;
+	gap: 3px;
+}
+.place-row-actions button {
+	padding: 7px 8px;
+	border: 0;
+	color: var(--muted);
+	background: transparent;
+	font-size: 12px;
+	font-weight: 650;
+	cursor: pointer;
+}
+.place-row-actions button:hover {
+	color: var(--ink);
+}
+.place-row-actions .delete-link:hover {
+	color: var(--danger);
 }
 .settings-actions {
 	display: flex;
@@ -472,30 +599,35 @@ select:focus-visible {
 	opacity: 0.55;
 	cursor: default;
 }
-.backup-section {
+.settings-section {
 	margin-top: 42px;
 	padding-top: 28px;
 	border-top: 1px solid var(--line);
 }
-.backup-section h2 {
+.settings-section h2 {
 	margin: 0 0 8px;
 	font-size: 17px;
 }
-.backup-section > p {
+.settings-section > p {
 	margin: 0;
 	color: var(--muted);
 	font-size: 13px;
 	line-height: 1.5;
+}
+.location-actions {
+	margin-top: 18px;
 }
 .backup-actions {
 	display: flex;
 	gap: 10px;
 	margin-top: 18px;
 }
+.location-status,
 .backup-status {
 	min-height: 20px;
 	padding-top: 10px;
 }
+.location-status.error,
 .backup-status.error {
 	color: var(--danger);
 }
@@ -541,6 +673,21 @@ select:focus-visible {
 .modal form > label span {
 	color: var(--muted);
 	font-weight: 400;
+}
+.captured-position {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	margin-top: 12px;
+	padding: 12px;
+	border-radius: 8px;
+	color: var(--muted);
+	background: var(--control);
+	font-size: 11px;
+}
+.captured-position strong {
+	color: var(--ink);
+	font-size: 13px;
 }
 .form-actions {
 	display: flex;
@@ -597,7 +744,7 @@ select:focus-visible {
 		padding-right: max(16px, env(safe-area-inset-right));
 	}
 	.site-header nav a {
-		padding: 8px;
+		padding: 8px 6px;
 		font-size: 12px;
 	}
 	.amount-input {
@@ -616,6 +763,21 @@ select:focus-visible {
 	}
 	.standard-page {
 		padding-top: 30px;
+	}
+	.place-editor,
+	.saved-places {
+		padding: 18px;
+	}
+	.place-list {
+		margin: 14px -18px -18px;
+	}
+	.place-row {
+		padding-right: 18px;
+		padding-left: 18px;
+	}
+	.position-panel {
+		align-items: stretch;
+		flex-direction: column;
 	}
 }
 

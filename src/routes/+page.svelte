@@ -1,13 +1,29 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
 	import { fly } from 'svelte/transition';
-	import { addExpense, getBudget, getExpenses, type Budget, type Expense } from '#lib/db.ts';
+	import {
+		addExpense,
+		getBudget,
+		getExpenses,
+		getPlaces,
+		type Budget,
+		type Expense,
+	} from '#lib/db.ts';
+	import { centsDigits, centsToAmount, formatCentsInput } from '#lib/amount.ts';
 	import { formatCurrency, formatPeriodLabel, getPeriodBounds } from '#lib/dates.ts';
+	import { captureCurrentPosition } from '#lib/geolocation.ts';
+	import { findMatchingPlace } from '#lib/places.ts';
 
-	let amount = $state('');
+	let amountCents = $state('');
 	let expenses = $state<Expense[]>([]);
-	let budget = $state<Budget>({ weekly: 200, monthly: 800, weekStart: 6 });
+	let budget = $state<Budget>({
+		weekly: 200,
+		monthly: 800,
+		weekStart: 6,
+		captureLocation: false,
+	});
 	let saving = $state(false);
+	let savingLabel = $state('Saving');
 	let toast = $state('');
 	let amountInput = $state<HTMLInputElement>();
 	let toastTimer: ReturnType<typeof setTimeout> | undefined;
@@ -57,8 +73,8 @@
 
 	async function captureExpense(event: SubmitEvent) {
 		event.preventDefault();
-		const parsedAmount = Number.parseFloat(amount);
-		if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+		const parsedAmount = centsToAmount(amountCents);
+		if (parsedAmount === null) {
 			showToast('Enter an amount greater than zero');
 			amountInput?.focus();
 			return;
@@ -66,25 +82,43 @@
 
 		saving = true;
 		try {
+			let position;
+			let matchingPlace;
+			let locationFailed = false;
+			if (budget.captureLocation) {
+				savingLabel = 'Locating';
+				try {
+					position = await captureCurrentPosition();
+					matchingPlace = findMatchingPlace(position, await getPlaces());
+				} catch {
+					locationFailed = true;
+				}
+			}
+			savingLabel = 'Saving';
 			const now = new Date().toISOString();
 			const expense: Expense = {
 				id: crypto.randomUUID(),
 				amount: Math.round(parsedAmount * 100) / 100,
 				category: 'Groceries',
-				location: '',
+				location: matchingPlace?.name ?? '',
+				...(matchingPlace ? { placeId: matchingPlace.id } : {}),
+				...(position ? { position } : {}),
 				occurredAt: now,
 				createdAt: now,
 			};
 			await addExpense(expense);
 			expenses = [expense, ...expenses];
-			amount = '';
-			showToast(`${formatCurrency(expense.amount)} added`);
+			amountCents = '';
+			showToast(
+				`${formatCurrency(expense.amount)} added${locationFailed ? ' without location' : ''}`
+			);
 			await tick();
 			amountInput?.focus();
 		} catch {
 			showToast('Could not save that entry');
 		} finally {
 			saving = false;
+			savingLabel = 'Saving';
 		}
 	}
 </script>
@@ -103,15 +137,17 @@
 			<!-- svelte-ignore a11y_autofocus -->
 			<input
 				{@attach focusAmount}
-				bind:value={amount}
+				bind:value={
+					() => formatCentsInput(amountCents), (value) => (amountCents = centsDigits(value))
+				}
 				aria-label="Amount spent"
-				inputmode="decimal"
+				inputmode="numeric"
 				type="text"
 				placeholder="0.00"
 				autocomplete="off"
 				autofocus
 			/>
-			<button type="submit" disabled={saving}>{saving ? 'Saving' : 'Add'}</button>
+			<button type="submit" disabled={saving}>{saving ? savingLabel : 'Add'}</button>
 		</div>
 	</form>
 

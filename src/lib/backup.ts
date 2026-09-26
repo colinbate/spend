@@ -1,10 +1,11 @@
-import type { Budget, Expense } from '#lib/db.ts';
+import type { Budget, Expense, Place } from '#lib/db.ts';
 
 export interface SpendBackup {
 	app: 'spend';
 	version: 1;
 	exportedAt: string;
 	expenses: Expense[];
+	places: Place[];
 	settings: Budget;
 }
 
@@ -27,8 +28,28 @@ function parseExpense(value: unknown, index: number): Expense {
 	if (typeof value.category !== 'string' || typeof value.location !== 'string') {
 		throw new Error(`Entry ${index + 1} has invalid details.`);
 	}
+	if (value.placeId !== undefined && typeof value.placeId !== 'string') {
+		throw new Error(`Entry ${index + 1} has an invalid place.`);
+	}
 	if (!isDateString(value.occurredAt) || !isDateString(value.createdAt)) {
 		throw new Error(`Entry ${index + 1} has an invalid date.`);
+	}
+	if (
+		value.position !== undefined &&
+		(!isRecord(value.position) ||
+			typeof value.position.latitude !== 'number' ||
+			!Number.isFinite(value.position.latitude) ||
+			value.position.latitude < -90 ||
+			value.position.latitude > 90 ||
+			typeof value.position.longitude !== 'number' ||
+			!Number.isFinite(value.position.longitude) ||
+			value.position.longitude < -180 ||
+			value.position.longitude > 180 ||
+			typeof value.position.accuracy !== 'number' ||
+			!Number.isFinite(value.position.accuracy) ||
+			value.position.accuracy < 0)
+	) {
+		throw new Error(`Entry ${index + 1} has an invalid position.`);
 	}
 
 	return {
@@ -36,7 +57,50 @@ function parseExpense(value: unknown, index: number): Expense {
 		amount: value.amount,
 		category: value.category,
 		location: value.location,
+		...(typeof value.placeId === 'string' ? { placeId: value.placeId } : {}),
+		...(value.position === undefined
+			? {}
+			: {
+					position: {
+						latitude: value.position.latitude as number,
+						longitude: value.position.longitude as number,
+						accuracy: value.position.accuracy as number,
+					},
+				}),
 		occurredAt: value.occurredAt,
+		createdAt: value.createdAt,
+	};
+}
+
+function parsePlace(value: unknown, index: number): Place {
+	if (!isRecord(value)) throw new Error(`Place ${index + 1} is not valid.`);
+	if (
+		typeof value.id !== 'string' ||
+		value.id.length === 0 ||
+		typeof value.name !== 'string' ||
+		value.name.trim().length === 0 ||
+		typeof value.latitude !== 'number' ||
+		!Number.isFinite(value.latitude) ||
+		value.latitude < -90 ||
+		value.latitude > 90 ||
+		typeof value.longitude !== 'number' ||
+		!Number.isFinite(value.longitude) ||
+		value.longitude < -180 ||
+		value.longitude > 180 ||
+		typeof value.radius !== 'number' ||
+		!Number.isFinite(value.radius) ||
+		value.radius <= 0 ||
+		!isDateString(value.createdAt)
+	) {
+		throw new Error(`Place ${index + 1} is invalid.`);
+	}
+
+	return {
+		id: value.id,
+		name: value.name.trim(),
+		latitude: value.latitude,
+		longitude: value.longitude,
+		radius: value.radius,
 		createdAt: value.createdAt,
 	};
 }
@@ -53,7 +117,8 @@ function parseSettings(value: unknown): Budget {
 		typeof value.weekStart !== 'number' ||
 		!Number.isInteger(value.weekStart) ||
 		value.weekStart < 0 ||
-		value.weekStart > 6
+		value.weekStart > 6 ||
+		(value.captureLocation !== undefined && typeof value.captureLocation !== 'boolean')
 	) {
 		throw new Error('The backup has invalid settings.');
 	}
@@ -62,15 +127,21 @@ function parseSettings(value: unknown): Budget {
 		weekly: value.weekly,
 		monthly: value.monthly,
 		weekStart: value.weekStart,
+		captureLocation: value.captureLocation === true,
 	};
 }
 
-export function createBackup(expenses: Expense[], settings: Budget): SpendBackup {
+export function createBackup(
+	expenses: Expense[],
+	settings: Budget,
+	places: Place[] = []
+): SpendBackup {
 	return {
 		app: 'spend',
 		version: 1,
 		exportedAt: new Date().toISOString(),
 		expenses,
+		places,
 		settings,
 	};
 }
@@ -86,7 +157,11 @@ export function parseBackupJson(json: string): SpendBackup {
 	if (!isRecord(value) || value.app !== 'spend' || value.version !== 1) {
 		throw new Error('That file is not a supported Spend backup.');
 	}
-	if (!isDateString(value.exportedAt) || !Array.isArray(value.expenses)) {
+	if (
+		!isDateString(value.exportedAt) ||
+		!Array.isArray(value.expenses) ||
+		(value.places !== undefined && !Array.isArray(value.places))
+	) {
 		throw new Error('The backup is incomplete.');
 	}
 
@@ -95,6 +170,7 @@ export function parseBackupJson(json: string): SpendBackup {
 		version: 1,
 		exportedAt: value.exportedAt,
 		expenses: value.expenses.map(parseExpense),
+		places: (value.places ?? []).map(parsePlace),
 		settings: parseSettings(value.settings),
 	};
 }

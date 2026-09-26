@@ -78,6 +78,9 @@
 			<a href="/history" aria-current={page.url.pathname === '/history' ? 'page' : undefined}
 				>History</a
 			>
+			<a href="/places" aria-current={page.url.pathname === '/places' ? 'page' : undefined}
+				>Places</a
+			>
 			<a href="/settings" aria-current={page.url.pathname === '/settings' ? 'page' : undefined}
 				>Settings</a
 			>

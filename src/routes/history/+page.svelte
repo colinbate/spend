@@ -19,7 +19,12 @@
 
 	const categories = ['Groceries', 'Personal care', 'Gas', 'Household', 'Other'];
 	let expenses = $state<Expense[]>([]);
-	let budget = $state<Budget>({ weekly: 200, monthly: 800, weekStart: 6 });
+	let budget = $state<Budget>({
+		weekly: 200,
+		monthly: 800,
+		weekStart: 6,
+		captureLocation: false,
+	});
 	let period = $state<Period>('week');
 	let anchorDate = $state(new Date());
 	let loading = $state(true);
@@ -136,7 +141,8 @@
 								expense.occurredAt,
 								isSameDay(expense.occurredAt, new Date())
 							)}{#if expense.location}
-								· {expense.location}{/if}</small
+								· {expense.location}{:else if expense.position}
+								· Location captured{/if}</small
 						></span
 					>
 					<strong>{formatCurrency(expense.amount)}</strong>
@@ -171,6 +177,15 @@
 					id="edit-location"
 					bind:value={editLocation}
 				/>
+				{#if editing.position}
+					<div class="captured-position">
+						<span>Captured coordinates</span>
+						<strong>
+							{editing.position.latitude.toFixed(6)}, {editing.position.longitude.toFixed(6)}
+						</strong>
+						<small>Accurate to about {Math.round(editing.position.accuracy)} m</small>
+					</div>
+				{/if}
 				<label for="edit-date">Date and time</label><input
 					id="edit-date"
 					type="datetime-local"
