@@ -4,9 +4,11 @@
 		deleteExpense,
 		getBudget,
 		getExpenses,
+		getPlaces,
 		updateExpense,
 		type Budget,
 		type Expense,
+		type Place,
 	} from '#lib/db.ts';
 	import {
 		formatCompactDate,
@@ -16,9 +18,11 @@
 		isSameDay,
 		type Period,
 	} from '#lib/dates.ts';
+	import { findMatchingPlace } from '#lib/places.ts';
 
 	const categories = ['Groceries', 'Personal care', 'Gas', 'Household', 'Other'];
 	let expenses = $state<Expense[]>([]);
+	let places = $state<Place[]>([]);
 	let budget = $state<Budget>({
 		weekly: 200,
 		monthly: 800,
@@ -32,7 +36,10 @@
 	let editAmount = $state('');
 	let editCategory = $state('Groceries');
 	let editLocation = $state('');
+	let editPlaceId = $state<string>();
 	let editDate = $state('');
+	let editSaving = $state(false);
+	let editError = $state('');
 
 	const bounds = $derived(getPeriodBounds(anchorDate, period, budget.weekStart));
 	const visibleExpenses = $derived(
@@ -42,9 +49,14 @@
 		})
 	);
 	const total = $derived(visibleExpenses.reduce((sum, expense) => sum + expense.amount, 0));
+	const suggestedPlace = $derived(
+		editing?.position && !editLocation.trim()
+			? findMatchingPlace(editing.position, places)
+			: undefined
+	);
 
 	onMount(async () => {
-		[expenses, budget] = await Promise.all([getExpenses(), getBudget()]);
+		[expenses, budget, places] = await Promise.all([getExpenses(), getBudget(), getPlaces()]);
 		loading = false;
 	});
 
@@ -65,7 +77,9 @@
 		editAmount = expense.amount.toFixed(2);
 		editCategory = expense.category;
 		editLocation = expense.location;
+		editPlaceId = expense.placeId;
 		editDate = toLocalInputValue(expense.occurredAt);
+		editError = '';
 	}
 
 	async function saveEdit(event: SubmitEvent) {
@@ -75,16 +89,38 @@
 		const parsedDate = new Date(editDate);
 		if (!Number.isFinite(parsedAmount) || parsedAmount <= 0 || Number.isNaN(parsedDate.getTime()))
 			return;
+		editSaving = true;
+		editError = '';
 		const updated: Expense = {
-			...editing,
+			...$state.snapshot(editing),
 			amount: Math.round(parsedAmount * 100) / 100,
 			category: editCategory,
 			location: editLocation.trim(),
 			occurredAt: parsedDate.toISOString(),
 		};
-		await updateExpense(updated);
-		expenses = expenses.map((expense) => (expense.id === updated.id ? updated : expense));
-		editing = null;
+		if (editPlaceId) updated.placeId = editPlaceId;
+		else delete updated.placeId;
+		try {
+			await updateExpense(updated);
+			expenses = expenses.map((expense) => (expense.id === updated.id ? updated : expense));
+			editing = null;
+		} catch {
+			editError = 'Could not save these changes. Try again.';
+		} finally {
+			editSaving = false;
+		}
+	}
+
+	function updateLocation(value: string) {
+		editLocation = value;
+		if (editPlaceId && places.find((place) => place.id === editPlaceId)?.name !== value) {
+			editPlaceId = undefined;
+		}
+	}
+
+	function useSuggestedPlace(place: Place) {
+		editLocation = place.name;
+		editPlaceId = place.id;
 	}
 
 	async function removeExpense() {
@@ -175,8 +211,22 @@
 				>
 				<label for="edit-location">Location <span>optional</span></label><input
 					id="edit-location"
-					bind:value={editLocation}
+					value={editLocation}
+					oninput={(event) => updateLocation(event.currentTarget.value)}
 				/>
+				{#if suggestedPlace}
+					<div class="location-suggestion">
+						<div>
+							<span>Nearby saved place</span>
+							<strong>{suggestedPlace.name}</strong>
+						</div>
+						<button
+							class="secondary-button"
+							type="button"
+							onclick={() => useSuggestedPlace(suggestedPlace)}>Use this place</button
+						>
+					</div>
+				{/if}
 				{#if editing.position}
 					<div class="captured-position">
 						<span>Captured coordinates</span>
@@ -192,11 +242,13 @@
 					bind:value={editDate}
 				/>
 				<div class="form-actions">
-					<button class="danger-button" type="button" onclick={removeExpense}>Delete</button><button
-						class="primary-button"
-						type="submit">Save</button
+					<button class="danger-button" type="button" disabled={editSaving} onclick={removeExpense}
+						>Delete</button
+					><button class="primary-button" type="submit" disabled={editSaving}
+						>{editSaving ? 'Saving…' : 'Save'}</button
 					>
 				</div>
+				<p class="edit-error" role="status">{editError}</p>
 			</form>
 		</div>
 	</div>

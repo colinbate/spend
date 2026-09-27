@@ -689,12 +689,52 @@ select:focus-visible {
 	color: var(--ink);
 	font-size: 13px;
 }
+.location-suggestion {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	margin-top: 10px;
+	padding: 11px 12px;
+	border: 1px solid var(--line);
+	border-radius: 8px;
+	background: var(--hover);
+}
+.location-suggestion > div {
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+}
+.location-suggestion span {
+	color: var(--muted);
+	font-size: 11px;
+}
+.location-suggestion strong {
+	overflow: hidden;
+	font-size: 13px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.location-suggestion button {
+	min-height: 36px;
+	padding: 0 11px;
+	font-size: 12px;
+	white-space: nowrap;
+}
 .form-actions {
 	display: flex;
 	justify-content: space-between;
 	margin-top: 25px;
 	padding-top: 18px;
 	border-top: 1px solid var(--line);
+}
+.edit-error {
+	min-height: 17px;
+	margin: 8px 0 0;
+	color: var(--danger);
+	font-size: 12px;
+	text-align: right;
 }
 
 @media (prefers-color-scheme: dark) {
