@@ -125,6 +125,7 @@
 
 	async function removeExpense() {
 		if (!editing) return;
+		if (!window.confirm('Delete this entry? This cannot be undone.')) return;
 		const id = editing.id;
 		await deleteExpense(id);
 		expenses = expenses.filter((expense) => expense.id !== id);
