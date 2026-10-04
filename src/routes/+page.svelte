@@ -13,6 +13,7 @@
 	import { formatCurrency, formatPeriodLabel, getPeriodBounds } from '#lib/dates.ts';
 	import { captureCurrentPosition } from '#lib/geolocation.ts';
 	import { findMatchingPlace } from '#lib/places.ts';
+	import { DEFAULT_CATEGORY } from '#lib/categories.ts';
 
 	let amountCents = $state('');
 	let expenses = $state<Expense[]>([]);
@@ -122,7 +123,7 @@
 			const expense: Expense = {
 				id: crypto.randomUUID(),
 				amount: Math.round(parsedAmount * 100) / 100,
-				category: 'Groceries',
+				category: matchingPlace?.category ?? DEFAULT_CATEGORY,
 				location: matchingPlace?.name ?? '',
 				...(matchingPlace ? { placeId: matchingPlace.id } : {}),
 				...(position ? { position } : {}),

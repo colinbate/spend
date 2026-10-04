@@ -15,6 +15,7 @@ const settings = { weekly: 200, monthly: 800, weekStart: 6, captureLocation: tru
 const place = {
 	id: 'place-1',
 	name: 'Market',
+	category: 'Household',
 	latitude: 32.2948,
 	longitude: -64.7814,
 	radius: 75,
@@ -56,5 +57,16 @@ describe('Spend backups', () => {
 		const oldBackup = JSON.parse(JSON.stringify(backup));
 		delete oldBackup.places;
 		expect(parseBackupJson(JSON.stringify(oldBackup)).places).toEqual([]);
+	});
+
+	it('loads older places without a store type', () => {
+		const backup = JSON.parse(JSON.stringify(createBackup([expense], settings, [place])));
+		delete backup.places[0].category;
+		expect(parseBackupJson(JSON.stringify(backup)).places).toEqual(backup.places);
+	});
+
+	it.each([42, '', '   '])('rejects an invalid store type %j', (category) => {
+		const backup = { ...createBackup([expense], settings), places: [{ ...place, category }] };
+		expect(() => parseBackupJson(JSON.stringify(backup))).toThrow('Place 1 is invalid');
 	});
 });

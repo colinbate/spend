@@ -79,6 +79,8 @@ function parsePlace(value: unknown, index: number): Place {
 		value.id.length === 0 ||
 		typeof value.name !== 'string' ||
 		value.name.trim().length === 0 ||
+		(value.category !== undefined &&
+			(typeof value.category !== 'string' || value.category.trim().length === 0)) ||
 		typeof value.latitude !== 'number' ||
 		!Number.isFinite(value.latitude) ||
 		value.latitude < -90 ||
@@ -98,6 +100,7 @@ function parsePlace(value: unknown, index: number): Place {
 	return {
 		id: value.id,
 		name: value.name.trim(),
+		...(typeof value.category === 'string' ? { category: value.category.trim() } : {}),
 		latitude: value.latitude,
 		longitude: value.longitude,
 		radius: value.radius,

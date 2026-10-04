@@ -19,8 +19,8 @@
 		type Period,
 	} from '#lib/dates.ts';
 	import { findMatchingPlace } from '#lib/places.ts';
+	import { categories, DEFAULT_CATEGORY } from '#lib/categories.ts';
 
-	const categories = ['Groceries', 'Personal care', 'Gas', 'Household', 'Other'];
 	let expenses = $state<Expense[]>([]);
 	let places = $state<Place[]>([]);
 	let budget = $state<Budget>({
@@ -121,6 +121,7 @@
 	function useSuggestedPlace(place: Place) {
 		editLocation = place.name;
 		editPlaceId = place.id;
+		editCategory = place.category ?? DEFAULT_CATEGORY;
 	}
 
 	async function removeExpense() {

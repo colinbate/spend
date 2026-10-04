@@ -18,6 +18,7 @@ export interface Expense {
 export interface Place {
 	id: string;
 	name: string;
+	category?: string;
 	latitude: number;
 	longitude: number;
 	radius: number;

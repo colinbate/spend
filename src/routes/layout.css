@@ -418,6 +418,7 @@ select:focus-visible {
 .settings-form input,
 .settings-form select,
 .place-form input,
+.place-form select,
 .modal input,
 .modal select {
 	width: 100%;
@@ -432,6 +433,7 @@ select:focus-visible {
 .settings-form input:focus,
 .settings-form select:focus,
 .place-form input:focus,
+.place-form select:focus,
 .modal input:focus,
 .modal select:focus {
 	border-color: var(--accent);

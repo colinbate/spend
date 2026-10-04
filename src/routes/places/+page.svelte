@@ -2,9 +2,11 @@
 	import { onMount } from 'svelte';
 	import { deletePlace, getPlaces, savePlace, type ExpensePosition, type Place } from '#lib/db.ts';
 	import { captureCurrentPosition } from '#lib/geolocation.ts';
+	import { categories, DEFAULT_CATEGORY } from '#lib/categories.ts';
 
 	let places = $state<Place[]>([]);
 	let name = $state('');
+	let category = $state(DEFAULT_CATEGORY);
 	let radius = $state<number | undefined>(75);
 	let position = $state<ExpensePosition>();
 	let editing = $state<Place>();
@@ -79,6 +81,7 @@
 			const place: Place = {
 				id: editing?.id ?? crypto.randomUUID(),
 				name: name.trim(),
+				category,
 				latitude: position.latitude,
 				longitude: position.longitude,
 				radius: parsedRadius,
@@ -100,6 +103,7 @@
 	function editPlace(place: Place) {
 		editing = place;
 		name = place.name;
+		category = place.category ?? DEFAULT_CATEGORY;
 		radius = place.radius;
 		position = {
 			latitude: place.latitude,
@@ -113,6 +117,7 @@
 	function resetForm() {
 		editing = undefined;
 		name = '';
+		category = DEFAULT_CATEGORY;
 		radius = 75;
 		position = undefined;
 	}
@@ -139,8 +144,9 @@
 <main class="standard-page places-page">
 	<h1>Places</h1>
 	<p class="page-intro">
-		Name the stores you visit and choose how close you need to be for a match. The closest place
-		inside its radius is added to each new entry automatically. New entries also need
+		Name the stores you visit, choose their type, and set how close you need to be for a match. The
+		closest place inside its radius supplies the name and category for each new entry. New entries
+		also need
 		<a href="/settings">location capture enabled</a>.
 	</p>
 
@@ -154,6 +160,13 @@
 				bind:value={name}
 				placeholder="Store name"
 			/>
+
+			<label for="place-category">Store type</label>
+			<select id="place-category" bind:value={category}>
+				{#each categories as option (option)}
+					<option>{option}</option>
+				{/each}
+			</select>
 
 			<label for="place-radius">Match radius <span>metres</span></label>
 			<input
@@ -207,7 +220,7 @@
 					<article class="place-row">
 						<div>
 							<strong>{place.name}</strong>
-							<small>{place.radius} m radius</small>
+							<small>{place.category ?? DEFAULT_CATEGORY} · {place.radius} m radius</small>
 						</div>
 						<div class="place-row-actions">
 							<button type="button" onclick={() => editPlace(place)}>Edit</button>
